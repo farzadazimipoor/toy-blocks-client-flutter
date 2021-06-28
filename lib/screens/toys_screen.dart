@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_challenge/models/block_model.dart';
 import 'package:flutter_challenge/models/node_element.dart';
 import 'package:flutter_challenge/models/node_model.dart';
 import 'package:flutter_challenge/providers/nodes_provider.dart';
+import 'package:flutter_challenge/widgets/block_widget.dart';
 import 'package:flutter_challenge/widgets/node_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -18,6 +20,12 @@ class _ToysScreenState extends State<ToysScreen> {
     NodesProvider nodesProvider =
         Provider.of<NodesProvider>(context, listen: false);
     return await nodesProvider.getInitialNodes();
+  }
+
+  Future<List<BlockModel>> _loadBlocksForNode(String urlNode) async {
+    NodesProvider nodesProvider =
+        Provider.of<NodesProvider>(context, listen: false);
+    return await nodesProvider.getBlocksFromNode(urlNode);
   }
 
   Widget _buildBlankBlockTile() {
@@ -54,6 +62,26 @@ class _ToysScreenState extends State<ToysScreen> {
                 setState(() {
                   _items[index].isExpanded = !_items[index].isExpanded;
                   //TODO: Implement the call to blocks widget here
+                  if (!isExpanded) {
+                    _items[index].body = FutureBuilder(
+                        future: _loadBlocksForNode(_items[index].node.url),
+                        builder: (context,
+                            AsyncSnapshot<List<BlockModel>> snapshot) {
+                          if (snapshot.hasData && snapshot.data != null) {
+                            return _generateBlocksWidget(snapshot.data!);
+                          } else {
+                            if (snapshot.hasError) {
+                              return Padding(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text("Error loading blocks"));
+                            } else {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                          }
+                        });
+                  }
                 });
               },
               children: _items.map((NodeElement item) {
@@ -70,6 +98,19 @@ class _ToysScreenState extends State<ToysScreen> {
               }).toList(),
             ))
       ],
+    );
+  }
+
+  Widget _generateBlocksWidget(List<BlockModel> blocks) {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: blocks.map((BlockModel block) {
+          return BlockWidget(block: block);
+        }).toList(),
+      ),
     );
   }
 

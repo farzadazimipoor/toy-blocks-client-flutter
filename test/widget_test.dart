@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_challenge/providers/nodes_provider.dart';
 import 'package:flutter_challenge/screens/toys_screen.dart';
+import 'package:flutter_challenge/widgets/block_widget.dart';
 import 'package:flutter_challenge/widgets/node_widget.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -65,6 +66,52 @@ void main() {
 
     expect(find.byType(NodeWidget), findsNWidgets(4));
   });
+
+  testWidgets('Verify that no block widgets loaded when app start ',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(
+          ChangeNotifierProvider<NodesProvider>(
+            create: (_) => NodesProvider(),
+            child: const MediaQuery(
+              data: MediaQueryData(),
+              child: MaterialApp(
+                home: ToysScreen(),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        expect(find.byType(BlockWidget), findsNothing);
+      });
+
+  testWidgets('Verify that by expand last node, not any block will be found ',
+          (WidgetTester tester) async {
+        await tester.pumpWidget(
+          ChangeNotifierProvider<NodesProvider>(
+            create: (_) => NodesProvider(),
+            child: const MediaQuery(
+              data: MediaQueryData(),
+              child: MaterialApp(
+                home: ToysScreen(),
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        var totalNodes = tester.widgetList(find.byType(ExpandIcon)).length;
+
+        expect(totalNodes, 4);
+
+        await tester.tap(find.byType(ExpandIcon).last);
+
+        await tester.pumpAndSettle();
+
+        expect(find.byType(BlockWidget), findsNothing);
+      });
 
   //TODO: Implement test cases related to the blocks implementation
 }

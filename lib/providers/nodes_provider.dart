@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_challenge/models/block_model.dart';
 import 'package:flutter_challenge/models/blocks_models.dart';
 import 'package:flutter_challenge/models/node_model.dart';
 import 'package:http/http.dart' as http;
@@ -67,9 +68,27 @@ class NodesProvider with ChangeNotifier {
     return _nodes;
   }
 
-  Future<List<Block>> getBlocksFromNode(String urlNode) async {
+  Future<List<BlockModel>> getBlocksFromNode(String urlNode) async {
+    List<BlockModel> result = [];
+    try {
+      var blocksUrl = _getBlockUrlFromNode(urlNode);
+      final response = await http.get(Uri.parse(blocksUrl)).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('timeout');
+        },
+      );
+      if (response.statusCode == 200) {
+        var blocksResult = Block.fromJson(json.decode(response.body));
+        if (blocksResult.data != null) {
+          result = blocksResult.data!;
+        }
+      }
+    } on Exception catch (e) {
+      throw e;
+    }
     //TODO: Implement the method that get the blocks details here
-    return List.empty();
+    return result;
   }
 
   String _getStatusUrlFromNode(String urlNode) {
